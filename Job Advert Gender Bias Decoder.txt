@@ -1,0 +1,783 @@
+// This decoder is currently hosted on Google Drive. Some of the code used is specific to this environment
+
+//***********************************
+// Code.gs file
+//***********************************
+
+function include(file) {
+  return HtmlService.createTemplateFromFile(file)
+  .evaluate()
+  .getContent()
+ 
+}
+
+function getScriptUrl() {
+ var url = ScriptApp.getService().getUrl();
+  
+ return url;
+}
+
+ function doGet(e) {
+
+   
+  Logger.log( Utilities.jsonStringify(e) );
+  if (!e.parameter.page) {
+    // When no specific page requested, return "home page"
+    
+    var page = HtmlService.createTemplateFromFile('Job_Advert_Tool_0');
+    page.myData_mas = readFile();
+    page.myData_fem = readFile2();
+    page.myData_mas_list = readFile3();
+    page.myData_fem_list = readFile4();
+
+    
+    return page.evaluate().setTitle('Job Advert Tool');
+  }
+  // else, use page parameter to pick an html file from the script
+   
+    var page = HtmlService.createTemplateFromFile(e.parameter['page']);
+    page.myData_mas = readFile();
+    page.myData_fem = readFile2();
+    page.myData_mas_list = readFile3();
+    page.myData_fem_list = readFile4();
+   
+    return page.evaluate().setTitle(e.parameter['page']);
+  
+}
+
+function gsServerFunction() {
+  return true;
+};
+
+
+function readFile(){
+	// This function reads a google sheet containing masculine defined words
+  var fileid= '#### Insert Google Sheet ID Here #######';
+  var sheet = SpreadsheetApp.openById(fileid).getSheetByName('Masculine');
+  var lastrow= sheet.getLastRow();
+
+  var data = sheet.getRange(1,1, lastrow, 1).getValues();
+  
+  return data;
+  
+}
+
+function readFile2(){
+	// This function reads a google sheet containing feminine defined words
+  var fileid= '#### Insert Google Sheet ID Here #######';
+  var sheet = SpreadsheetApp.openById(fileid).getSheetByName('Feminine');
+  var lastrow= sheet.getLastRow();
+
+  var data = sheet.getRange(1,1, lastrow, 1).getValues();
+  
+  return data;
+  
+}
+
+function readFile3(){
+	// This function reads a google sheet containing alternatives to masculine defined words
+  var fileid= '#### Insert Google Sheet ID Here #######';
+  var sheet = SpreadsheetApp.openById(fileid).getSheetByName('Masculine');
+  var lastrow= sheet.getLastRow();
+
+  var data = sheet.getRange(1,2, lastrow, 1).getValues();
+  
+  return data;
+  
+}
+
+
+function readFile4(){
+	// This function reads a google sheet containing alternatives to feminine defined words
+  var fileid= '#### Insert Google Sheet ID Here #######';
+  var sheet = SpreadsheetApp.openById(fileid).getSheetByName('Feminine');
+  var lastrow= sheet.getLastRow();
+
+  var data = sheet.getRange(1,2, lastrow, 1).getValues();
+  
+  return data;
+  
+}
+
+//***********************************
+// Page 1
+//***********************************
+
+
+<!DOCTYPE html>
+<html>
+
+
+  <head>
+    <base target="_top">
+          
+    
+
+    <?!= include('Formatting.css') ?>
+    
+  </head>
+
+  <body>
+
+  <div id = "rectangle2">
+		<IMG STYLE="position:absolute; TOP:5px; LEFT:5px; WIDTH:63px; HEIGHT:75px" src = ' ### Insert image source here ###' alt="IDEA Academy">
+		    <h2>Job Advert Decoder</h2>
+		<?var url = getScriptUrl();?><a href='<?=url?>?page=Job_Advert_Tool_0'><IMG STYLE="position:absolute; TOP:25px; LEFT:95%; WIDTH:38px; HEIGHT:35px" SRC=' ### Insert address of the logo you want to use ###'></a>
+    </div>
+   <br>
+    
+    <br><br>
+    
+    <br><br>
+    
+    <br>
+   <h3>Please paste the job advert into the text box below, then click the button underneath</h3>
+    <br>
+//Text area to put the job advert (or any free text really) to test for Gender Bias
+    <textarea rows = "10" cols = "100" id="Job_In" class="AreaClass"></textarea> 
+    
+    <!--<input class="InBox" type="text" id="Job_In">-->
+    <br>
+    
+    <br>
+    <?var url = getScriptUrl();?><a href='<?=url?>?page=Job_Advert_Tool_Pg2'> <button class="BtnClass Btn2" onclick=GetData_P2()> Analyse Job Advert </button></a>
+
+<script>
+
+function GetData_P2(){
+	// This function gets the text that has been inputted, and stores it to pass to the second page
+var Job_Ad = document.getElementById("Job_In").value;
+localStorage.setItem('JobText',Job_Ad)
+}
+
+</script>
+
+  </body>
+</html>
+
+//***********************************
+// Page 2
+//***********************************
+
+<!DOCTYPE html>
+<html>
+  <head>
+  <?!= include('Formatting.css') ?>  
+
+    <base target="_top">
+  </head>
+  <body>
+
+
+  <div id = "rectangle2">
+		<IMG STYLE="position:absolute; TOP:5px; LEFT:5px; WIDTH:63px; HEIGHT:75px" src =  ' ### Insert image source here ###' alt="IDEA Academy">
+		    <h2>Job Advert Decoder</h2>
+            <h4 align="right"> Results Page</h4>
+		<?var url = getScriptUrl();?><a href='<?=url?>?page=Job_Advert_Tool_0'><IMG STYLE="position:absolute; TOP:25px; LEFT:95%; WIDTH:38px; HEIGHT:35px" SRC=' ### Insert image source here ###'></a>
+    </div>
+
+
+    <br> <br> <br> <br> <br> <br>
+    <pre ><b><font color=white> The results of your job advert are:</font></b></pre>
+    <br>
+    <output class="OutBox2" type="text" id="Result_output"> </output>  
+    <br>
+    <output class="OutBox2" type="text" id="Explain_Output"></output>
+
+    <p id = "Explain_Output2"></p>
+    
+    <output class="OutBox2" type="text" id="Explain_Output3"></output>
+  
+    <output class="OutBox2" type="text" id="Word_List_1"></output>
+
+    <output class="OutBox2" type="text" id="Word_List_2"></output>
+
+    <output class="OutBoxBold" type="text" id="Readability_1"></output>
+    <br>
+    <output class="OutBox2" type="text" id="Readability_2"></output>
+    <br>
+    <output class="OutBoxBold" type="text" id="Readability_3"></output>
+    <br>
+    <output class="OutBox2" type="text" id="Readability_4"></output>
+    <br>
+    <output class="OutBoxBold" type="text" id="Readability_5"></output>
+    <br>
+    <output class="OutBox2" type="text" id="Readability_6"></output>
+    <br>    <br>
+    <h5 class = "Title3"> Your job advert:</h5>
+    <br>
+    <output class="OutBox2" type="text" id="JobAd_Output"> </output> 
+
+    <br><br>
+    <output class="OutBox2" type="text" id="GabbyOut"> </output>
+    
+    
+    
+    <script>
+
+	// Some variables declared at the start. 
+	
+	// Arrays of words used later
+var masc_data_raw = <?= myData_mas ?>;
+var fem_data_raw = <?= myData_fem ?>;
+var masc_data_list = <?= myData_mas_list ?>;
+var fem_data_list = <?= myData_fem_list ?>;
+
+var Masculine_Words = masc_data_raw.split(',')
+var Feminine_Words = fem_data_raw.split(',')
+
+// Explanations used depending on the score
+
+var Feminine_Explain = "This means the job ad uses more words that are stereotypically feminine than words that are stereotypically masculine. Fortunately, the research suggests this will have only a slight effect on how appealing \
+					the job is to men, and will encourage women applicants." 					
+					
+var Masculine_Explain = "This means the job ad uses more words that are stereotypically masculine than words that are stereotypically feminine. It risks putting women off applying, but will probably encourage men to apply."
+
+var Neutral_Explain = "This means the job ad doesn't use any words that are stereotypically masculine or stereotypically feminine. It probably won't be off-putting to men or women applicants."
+
+var Balanced_Explain = "This means the job ad uses an equal number of words that are stereotypically masculine and stereotypically feminine. The balance means it probably won't be off-putting to men or women applicants."
+
+
+function wordInString(s, word){
+	// FUnction to count number of words in the sentence (used for readability scores)
+  return new RegExp( '\\b' + word, 'i').test(s);
+  <!--return new RegExp( '\\b' + word + '\\b', 'i').test(s);-->
+}
+
+function countSyllables(word){
+	 // Function to count number of syllables (used for readability scores)
+  word = word.toLowerCase();                                  
+  if(word.length <= 3) { return 1; }                             
+  word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '');  
+  word = word.replace(/^y/, '');   
+  word = word.replace(/-/g, '');
+  if (word.match(/[aeiouy]{1,2}/g))                     
+  return word.match(/[aeiouy]{1,2}/g).length;  
+  return 1;
+}
+
+
+function AssessJobAd()
+{
+var Job_Ad = localStorage.getItem('JobText');
+
+var Ad_Words = Job_Ad.split(/ /g)
+var sentences = Job_Ad.split(/[\.!?]+/); // split on punctuation
+var No_Sentences = sentences.length -1  // subtract 1 to account for last sentence
+if (No_Sentences == 0) {No_Sentences =1} // Avoid errors
+
+// Create some empty variables - to be filled later in the function
+var Explain_Out = "";
+var Result_Out = "";
+var Ad_Out = "";
+  
+var Masculine_Cnt = 0
+var Masculine_Found = "" 
+
+var Feminine_Cnt = 0
+var Feminine_Found = "" 
+
+var Total_syllables = 0
+var syllables_3p = 0
+
+
+
+for (var m = 0; m < Ad_Words.length; m += 1) {
+var SearchWord = ""
+var SearchWord2 = Ad_Words[m]
+SearchWord = Ad_Words[m].replace(".","");		
+SearchWord = SearchWord.replace(",","");
+SearchWord = SearchWord.replace("!","");
+SearchWord = SearchWord.replace("?","");
+SearchWord = SearchWord.replace(":","");
+SearchWord = SearchWord.replace(";","");
+
+
+//reset syllables for this word
+var syllables = 0
+syllables = countSyllables(SearchWord);
+
+if(syllables > 2)
+{syllables_3p = syllables_3p + 1 }
+else
+{}
+
+Total_syllables = Total_syllables + syllables
+
+var M_Word=""
+var F_Word=""
+var M_Word_Options = ""                
+var F_Word_Options = "" 
+
+		  for (var i = 0; i < Masculine_Words.length; i += 1) {
+			  if (wordInString(SearchWord,Masculine_Words[i]) == true) {
+					Masculine_Cnt = Masculine_Cnt + 1;                                                                   
+                    // Which word list to use
+                    var splits = masc_data_list.split(',');
+                    var splits = splits[i];
+                    var splits = splits.split(' ');
+
+                    M_Word_Options = splits;
+                    
+                    //
+                    //Make the dropdown list of alternatives to the masculine word found
+                    M_Word = '<select class = "MText"> <option value = "keep">' + SearchWord2 + '</option>'
+                    for (var MWO = 0; MWO < M_Word_Options.length; MWO += 1) { 
+                    M_Word = M_Word + '<option value =' + M_Word_Options[MWO] + '>' + M_Word_Options[MWO] + '</option>'
+                    }
+                                                        
+                    M_Word = M_Word + '</select>';
+                    //
+                    if (Masculine_Found == "") {Masculine_Found = '<span class="MText">' + SearchWord + '</span>'} else {Masculine_Found = Masculine_Found + ", " + '<span class="MText">' + SearchWord + '</span>'} ;
+                    }
+					else {}
+		}  
+					
+                    
+                    for (var k = 0; k < Feminine_Words.length; k += 1) {
+						  if (wordInString(SearchWord,Feminine_Words[k]) == true) {
+                                Feminine_Cnt = Feminine_Cnt + 1;
+                                //F_Word = '<span class="FText">' + SearchWord + '</span>' ;
+								// Which word list to use
+                                var splits = fem_data_list.split(',');
+                                var splits = splits[k];
+                                var splits = splits.split(' ');
+
+                                F_Word_Options = splits;
+                                //
+                                //Make the dropdown list of alternatives
+                                F_Word = '<select class = "FText"> <option value = "keep">' + SearchWord2 + '</option>'
+                                for (var FWO = 0; FWO < F_Word_Options.length; FWO += 1) { 
+                                F_Word = F_Word + '<option value =' + F_Word_Options[FWO] + '>' + F_Word_Options[FWO] + '</option>'
+                                }
+                                                                    
+                                F_Word = F_Word + '</select>';
+                                //
+                                if (Feminine_Found == "") {Feminine_Found = '<span class="FText">' + SearchWord + '</span>'} else {Feminine_Found = Feminine_Found + ", " + '<span class="FText">' + SearchWord + '</span>'};
+								}
+								else {}
+					} 
+// Rebuild the job advert word by word - if it is masculine/feminine use a coloured highlight and offer a dropdown list of options, otherwise use a normal font.
+if (F_Word !== "") {
+Ad_Out = Ad_Out + " " + F_Word
+}
+else if (M_Word !== ""){
+Ad_Out = Ad_Out + " " + M_Word
+}
+else {
+Ad_Out = Ad_Out + " " + '<span class="NText">' + SearchWord2 + '</span>'
+}
+}
+
+var Words_List_1
+var Words_List_2
+
+// Based on the score, give an explanation
+
+    if (Feminine_Cnt > 0 && Masculine_Cnt == 0) {
+	Result_Out = "strongly feminine coded";
+	Explain_Out = Feminine_Explain;
+	Words_List_1 = "There are no stereotypically masculine words." 
+    Words_List_2 = "The stereotypically feminine words are: " + Feminine_Found + "."
+	} else if (Masculine_Cnt > 0 && Feminine_Cnt == 0) {
+	Result_Out = "strongly masculine coded";
+	Explain_Out = Masculine_Explain;
+	Words_List_1 = "There are no stereotypically feminine words." 
+    Words_List_2 = "The stereotypically masculine words are: " + Masculine_Found + "."
+	} else if (Masculine_Cnt == 0 && Feminine_Cnt == 0) {
+	Result_Out = "neutral coded";
+	Explain_Out = Neutral_Explain;
+	Words_List_1 = ""
+    Words_List_2 = ""
+	} else if (Masculine_Cnt == Feminine_Cnt)  {
+	Result_Out = "balanced";
+	Explain_Out = Balanced_Explain;
+	Words_List_1 = "The stereotypically masculine words are: " + Masculine_Found + "."
+    Words_List_2 = "The stereotypically feminine words are: " + Feminine_Found + "."
+ 	} else if ((Feminine_Cnt / Masculine_Cnt) >= 2 && Feminine_Cnt > 5)  {
+	Result_Out = "strongly feminine coded"; 
+	Explain_Out = Feminine_Explain;
+	Words_List_1 = "The stereotypically masculine words are: " + Masculine_Found + "."
+    Words_List_2 = "The stereotypically feminine words are: " + Feminine_Found + "."
+ 	} else if ((Masculine_Cnt / Feminine_Cnt) >= 2 && Masculine_Cnt > 5)  {
+	Result_Out = "strongly masculine coded";
+	Explain_Out = Masculine_Explain;
+	Words_List_1 = "The stereotypically masculine words are: " + Masculine_Found + "."
+    Words_List_2 = "The stereotypically feminine words are: " + Feminine_Found + "."
+ 	} else if (Feminine_Cnt > Masculine_Cnt)  {
+	Result_Out = "feminine coded"; 
+	Explain_Out = Feminine_Explain;
+	Words_List_1 = "The stereotypically masculine words are: " + Masculine_Found + "."
+    Words_List_2 = "The stereotypically feminine words are: " + Feminine_Found + "."
+	} else if (Masculine_Cnt > Feminine_Cnt)  {
+	Result_Out = "masculine coded";
+	Explain_Out = Masculine_Explain;
+	Words_List_1 = "The stereotypically masculine words are: " + Masculine_Found + "."
+    Words_List_2 = "The stereotypically feminine words are: " + Feminine_Found + "."
+	} else {Result_Out = "none"}	
+
+	// Put these values onto the page
+	
+document.getElementById("Result_output").value = "This job advert is " + Result_Out + ". " 
+document.getElementById("Explain_Output").value = Explain_Out 
+document.getElementById("Explain_Output2").value = Explain_Out 
+document.getElementById("Word_List_1").innerHTML = Words_List_1
+document.getElementById("Word_List_2").innerHTML = Words_List_2
+document.getElementById('JobAd_Output').innerHTML = Ad_Out
+
+
+// Calculate readability
+
+var ASW = (Total_syllables/Ad_Words.length)
+var ASL = (Ad_Words.length/No_Sentences)
+
+//(206.835 – (1.015 x ASL) – (84.6 x ASW))
+var Flesch_R_Ease_P1 = (1.015 * ASL )
+var Flesch_R_Ease_P2 = (84.6 * ASW ) 
+var Flesch_R_Ease = parseInt(206.835 - Flesch_R_Ease_P1 - Flesch_R_Ease_P2)
+
+var Flesch_R_Ease_Exp = ""
+
+if (Flesch_R_Ease < 61) 
+{Flesch_R_Ease_Exp = "Scores from 0-60 are typically regarded as college or college graduate level and fairly difficult to read."}
+else if (Flesch_R_Ease > 60 && Flesch_R_Ease < 81)
+{Flesch_R_Ease_Exp = "Scores from 60-80 are regarded as reasonably easy to read and written in plain English."}
+else if (Flesch_R_Ease > 80 )
+{Flesch_R_Ease_Exp = "Higher scores than 80 are regarded as easy to read for kids."}
+else
+{Flesch_R_Ease_Exp = "Error"}
+
+//(.39 x ASL) + (11.8 x ASW) – 15.59
+var Flesch_Kincaid_Grade_P1 = (0.39 * ASL) 
+var Flesch_Kincaid_Grade_P2 = (11.8 * ASW)
+var Flesch_Kincaid_Grade_P3 = (Flesch_Kincaid_Grade_P1 + Flesch_Kincaid_Grade_P2)
+var Flesch_Kincaid_Grade = parseInt(Flesch_Kincaid_Grade_P3 - 15.59)
+
+var Flesch_K_Exp = ""
+if (Flesch_Kincaid_Grade < 6)
+{Flesch_K_Exp = "Scores below 6 indicate an easy to read text, usually understandable by people who have been educated up to UK Year 7/US grade 6 (approximately age 11-12). This text should be easy to read"}
+else if (Flesch_Kincaid_Grade >= 6 && Flesch_Kincaid_Grade < 12)
+{Flesch_K_Exp = "Scores below 12 indicate an average text, usually understandable by people who have been educated up to UK Year 13/US grade 12 (approximately age 17-18). This text should be accessible to most people."}
+else if (Flesch_Kincaid_Grade >= 12)
+{Flesch_K_Exp = "Scores higher than 12 indicate a more complicated text. Academic papers usually fall into this category. This text may not be easily understandable by all."}
+else 
+{Flesch_K_Exp = "Error"}
+
+//Fog Index = (Average No. of words in sentences + Percentage of words of three or more syllables) x 0.4
+
+var s3_Percent = (syllables_3p/Ad_Words.length)
+s3_Percent = s3_Percent * 100
+var Fog_Index_P1 = ASL + s3_Percent
+var Fog_Index = parseInt(Fog_Index_P1 * 0.4)
+
+var Fog_Index_Exp = ""
+if (Fog_Index < 6)
+{Fog_Index_Exp = "Pre UK Year 7/US grade 6 education level. This text should be easily understood."}
+else if (Fog_Index >= 6 && Fog_Index < 11)
+{Fog_Index_Exp = "UK Key Stage 3-4/US grades 6-10 education level. This text should be widely accessible."}
+else if (Fog_Index >= 11 && Fog_Index < 12)
+{Fog_Index_Exp = "UK 6th Form/US Grades 11+ education level. This text should be accessible to most."}
+else if (Fog_Index >= 12)
+{Fog_Index_Exp = "Scores higher than 12 indicate a more complicated text. Academic papers usually fall into this category. This text may not be easily understandable by all."}
+else
+{Fog_Index_Exp = "Error"}
+
+// Put these values ont he page
+
+document.getElementById('Readability_1').innerHTML = "Flesch Reading Ease Score: " + Flesch_R_Ease
+document.getElementById('Readability_2').innerHTML = Flesch_R_Ease_Exp
+document.getElementById('Readability_3').innerHTML = "Flesch-Kincaid Grade Level: " + Flesch_Kincaid_Grade
+document.getElementById('Readability_4').innerHTML = Flesch_K_Exp
+document.getElementById('Readability_5').innerHTML = "Fog Index: " + Fog_Index
+document.getElementById('Readability_6').innerHTML = Fog_Index_Exp
+
+
+
+} //End of function
+
+// When page loads, tun this function
+AssessJobAd()
+// Then clear local storage
+localStorage.removeItem('JobText');
+
+
+
+    </script>
+  </body>
+</html>
+
+
+//***************************
+// Formatting
+//*****************************
+
+<style>
+
+  body {
+  background-color: #1e1f21;
+  }
+  
+  #heading {
+	  text-align: center;
+	  
+  }
+  
+  h1 {
+	font-family: "Courier New", Courier, "Lucida Sans Typewriter", "Lucida Typewriter", monospace;
+	font-size: 100px;
+	font-style: normal;
+	font-variant: normal;
+	font-weight: 800;
+	line-height: 20%;
+	color: white;
+}
+  .button {
+    background-color: #4080bf;
+    border: none;
+    color: white;
+    padding: 15px 15px;
+    text-align: center;
+    text-decoration: none;
+    display: inline-block;
+    font-size: 18px;
+	width: 180px;
+	font-family: 'Tahoma', serif;
+	font-weight:bold;
+}
+
+  .areai {
+	 padding: 5px
+	 margin: 15px;
+	 font-family: verdana;
+	 height: 200px;
+	 font-size: 13px;
+	 width: 1500px;
+		display:block;
+		position: absolute;
+		top: 30%; 
+		left: 20px; 
+		width: 100px; 
+		height: 60px; 
+	 
+  }
+
+
+
+p  {
+    font-family: verdana;
+	font-size: 13px;
+}
+
+
+.options_area {
+	 margin: 10px;
+	 width: 350px;
+	 height: 80%;
+	 padding:10px;
+	 float:left;
+	 background : #1e1f21;	 
+}
+  
+
+.title_area {
+	 margin: 10px;
+	 width: 350px;
+	 height: 80%;
+	 padding:10px;
+	 float:left;
+	 background : #1e1f21;	
+		display:block;
+		position: absolute;
+		top: 0px; 
+		left: 450px; 
+		width: 100px; 
+		height: 60px; 	 
+}
+
+pre {
+	font-family: OCR A Std, monospace;
+	font-size: 20px;
+	font-style: normal;
+	font-variant: normal;
+	font-weight: 500;
+	line-height: 5px;
+	color: #74777a;
+}
+
+.vl {
+    border-left: 2px solid #4080bf;
+    height: 350px;
+    position: absolute;
+    left: 420px;
+    margin-left: -3px;
+    top: 10px;
+}
+
+
+h1 {
+	font-family: "Courier New", Courier, "Lucida Sans Typewriter", "Lucida Typewriter", monospace;
+	font-size: 100px;
+	font-style: normal;
+	font-variant: normal;
+	font-weight: 800;
+	line-height: 20%;
+	color: white;
+
+
+}
+
+
+.bottom_area{
+
+    margin-left: auto;
+    margin-right: auto;
+
+
+}
+
+#rectangle {
+    float:bottom;    
+    width: 100%;
+    height: 50px;
+    padding-top: 15px;
+    //padding-bottom: 10px;
+    background: #4080bf;
+    position: absolute;
+    bottom: 0px; 
+	left: 0px;
+}
+
+#rectangle2 {
+    float:top;    
+    width: 100%;
+    height: 95px;
+    background: black;
+    position: absolute;
+    top: 0px; 
+	left: 0px; 
+}
+
+h2 {
+	font-family: "Courier New", Courier, "Lucida Sans Typewriter", "Lucida Typewriter", monospace;
+	font-size: 70px;
+	font-style: normal;
+	font-variant: normal;
+	font-weight: 800;
+	line-height: 1%;
+	color: #dbdbdb;
+	position: absolute;
+    left: 80px;
+    top: 0px;
+}
+
+h3{
+	font-family: OCR A Std, monospace;
+	font-size: 20px;
+	font-style: normal;
+	font-variant: normal;
+	font-weight: 500;
+	line-height: 5px;
+	color: white;
+}
+
+h4 {
+	font-family: Tahoma;
+	font-size: 30px;
+	font-style: normal;
+	font-variant: normal;
+	font-weight: 800;
+	line-height: 1%;
+	color: white;
+	position: absolute;
+    right: 120px;
+    top: 0px;
+}
+
+h5 {
+	font-family: Tahoma;
+	font-size: 40px;
+	font-style: normal;
+	font-variant: normal;
+	font-weight: 800;
+	line-height: 1%;
+	color: white;
+    left: 20px:
+
+}
+
+     
+    .InBox {
+    
+        text-align:top;text-indent 10px;width:1000px; height:200px;font-size:20px;font-family:calibri;
+        border-radius: 12px; border: 2px solid #555555; display: block; position: relative; overflow:auto; margin-left: 10px
+    }
+
+    .AreaClass {
+        font-size:18px;font-family:'Tahoma', serif;
+        border: 2px solid #555555; margin-left: 10px
+    }
+
+    .OutBoxBold {
+        text-align:top;width:1000px; font-size:25px;font-family:calibri;font-weight: bold; color:#dbdbdb;
+          display: block; position: relative; overflow:auto; margin-left: 30px
+    }    
+    
+    .OutBox {
+        text-align:top;width:1000px; height:100px;font-size:18px;font-family:'Tahoma', serif; 
+          border-radius: 12px;border: 2px solid #555555; display: block; position: relative; overflow:auto;color: #dbdbdb;
+    }
+    .OutBox2 {
+        text-align:top;width:1000px; height:50px;font-size:18px;font-family:'Tahoma', serif; color: #dbdbdb;
+          display: block; position: relative; overflow:auto; margin-left: 30px
+    }    
+    .OutBox3 {
+        text-align:top;width:1000px; height:100px;font-size:18px;font-family:'Tahoma', serif;color: #dbdbdb; 
+          display: block; position: relative; overflow:auto; margin-left: 30px
+    }        
+    .BtnClass {
+    font-size: 12px;
+        text-align:center;font-size:30px;font-family:'Tahoma', serif;font-weight:bold;border: 2px solid #555555;background-color: #4080bf;width: 400px; color: #dbdbdb;
+        box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19); margin-left:15px
+    }
+    
+    .Btn2:hover {
+        background-color: #34495E; box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);
+    }
+    
+    .Title {
+    font-size:60px;font-family:calibri; margin-left: 30px
+    }
+    
+    .Title2 {
+    font-size:30px;font-family:calibri; margin-left: 30px
+    }
+    
+   
+    
+  
+    
+    
+    span.highlight{background:yellow; padding:3px;}
+    
+    
+       
+   
+   
+    
+    .tab { display:inline-block; 
+           margin-left: 40px; }
+    .Smtab { display:inline-block; 
+           margin-left:20px; }	   
+    .MText{font-size:18px;font-family:Tahoma; color: #4080bf;} 	   
+    .FText{font-size:18px;font-family:Tahoma; color: #CD6155  ;} 
+    .FText2{font-size:18px;font-family:Tahoma; color: #CD6155  ;box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2), 0 6px 20px 0 rgba(0,0,0,0.19);} 
+    .NText{font-size:18px;font-family:Tahoma; color: white;} 
+    
+
+
+</style>
+
+
+
+
+
